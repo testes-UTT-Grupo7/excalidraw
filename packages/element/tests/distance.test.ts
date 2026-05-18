@@ -378,3 +378,29 @@ describe("distanceToElement - Caixa Branca", () => {
     });
   });
 });
+
+describe("distanceToElement - Caixa Preta", () => {
+  it("retorna uma distância menor para pontos mais próximos do contorno", () => {
+    const rect = createRectangle({ x: 100, y: 100, width: 120, height: 80 });
+    const elementsMap = arrayToMap([rect]);
+
+    const nearPoint = pointFrom<GlobalPoint>(220, 140);
+    const farPoint = pointFrom<GlobalPoint>(340, 140);
+
+    const nearDistance = distanceToElement(rect, elementsMap, nearPoint);
+    const farDistance = distanceToElement(rect, elementsMap, farPoint);
+
+    expect(nearDistance).toBeGreaterThanOrEqual(0);
+    expect(farDistance).toBeGreaterThan(nearDistance);
+  });
+
+  it("mantém a distância próxima de zero para pontos sobre o contorno", () => {
+    const ellipse = createEllipse({ x: 0, y: 0, width: 100, height: 100 });
+    const pointOnBorder = pointFrom<GlobalPoint>(100, 50);
+
+    const distance = distanceToElement(ellipse, arrayToMap([ellipse]), pointOnBorder);
+
+    expect(distance).toBeGreaterThanOrEqual(0);
+    expect(distance).toBeLessThan(1);
+  });
+});
