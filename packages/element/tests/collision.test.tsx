@@ -7,7 +7,7 @@ import "@excalidraw/utils/test-utils";
 import { render } from "@excalidraw/excalidraw/tests/test-utils";
 
 import * as distance from "../src/distance";
-import { hitElementItself } from "../src/collision";
+import { hitElementItself, isPointInElement } from "../src/collision";
 
 describe("check rotated elements can be hit:", () => {
   beforeEach(async () => {
@@ -218,3 +218,86 @@ describe("hitElementItself cache", () => {
     ).toBe(true);
   });
 });
+
+describe("isPointInElement - Caixa Branca e Caixa Preta", () => {
+  const elementsMap = new Map();
+
+  describe("Caixa-Branca (MC/DC Coverage)", () => {
+    // Decisão analisada: (isLinearElement(element) || isFreeDrawElement(element)) && !isPathALoop(element.points)
+
+    it("CT01: Linha Reta (Linear = true, FreeDraw = false, Loop = false) -> Deve retornar false", () => {
+      const line = API.createElement({
+        type: "line",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        points: [[0, 0], [100, 100]] as any
+      });
+      const point = pointFrom<GlobalPoint>(50, 50);
+      expect(isPointInElement(point, line, elementsMap)).toBe(false);
+    });
+
+    it("CT02: Retângulo (Linear = false, FreeDraw = false, Loop = ignorado) -> Deve testar colisão", () => {
+      const rect = API.createElement({
+        type: "rectangle",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100
+      });
+      const point = pointFrom<GlobalPoint>(50, 50);
+      expect(isPointInElement(point, rect, elementsMap)).toBe(true);
+    });
+
+    it("CT03: FreeDraw Aberto (Linear = false, FreeDraw = true, Loop = false) -> Deve retornar false", () => {
+      const freeDraw = API.createElement({
+        type: "freedraw",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        points: [[0, 0], [50, 50], [100, 0]] as any
+      });
+      const point = pointFrom<GlobalPoint>(50, 25);
+      expect(isPointInElement(point, freeDraw, elementsMap)).toBe(false);
+    });
+
+    it("CT04: Linha Fechada/Triângulo (Linear = true, FreeDraw = false, Loop = true) -> Deve testar colisão", () => {
+      const loopLine = API.createElement({
+        type: "line",
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+        points: [[0, 0], [100, 0], [50, 100], [0, 0]] as any
+      });
+      const point = pointFrom<GlobalPoint>(50, 50);
+      expect(isPointInElement(point, loopLine, elementsMap)).toBe(true);
+    });
+  });
+
+  describe("Caixa-Preta (Valor Limite)", () => {
+    it("CT05: Ponto claramente dentro do Retângulo (Dentro)", () => {
+      const rect = API.createElement({ type: "rectangle", x: 0, y: 0, width: 100, height: 100 });
+      expect(isPointInElement(pointFrom<GlobalPoint>(50, 50), rect, elementsMap)).toBe(true);
+    });
+
+    it("CT06: Ponto claramente fora do Retângulo (Fora)", () => {
+      const rect = API.createElement({ type: "rectangle", x: 0, y: 0, width: 100, height: 100 });
+      expect(isPointInElement(pointFrom<GlobalPoint>(200, 200), rect, elementsMap)).toBe(false);
+    });
+
+    it("CT07: Ponto exatamente sobre a aresta (Contorno/Limite)", () => {
+      const rect = API.createElement({ type: "rectangle", x: 0, y: 0, width: 100, height: 100 });
+      // Retorna false pois isPointInElement testa estritamente o interior (o contorno é tratado por isPointOnElementOutline)
+      expect(isPointInElement(pointFrom<GlobalPoint>(100, 50), rect, elementsMap)).toBe(false);
+    });
+
+    it("CT08: Ray-casting no exato vértice (Quina/Extremo Limite)", () => {
+      const diamond = API.createElement({ type: "diamond", x: 0, y: 0, width: 100, height: 100 });
+      expect(isPointInElement(pointFrom<GlobalPoint>(50, 50), diamond, elementsMap)).toBe(true);
+    });
+  });
+});
+
