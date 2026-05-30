@@ -9,8 +9,15 @@ describe("TDD - limitarTexto", () => {
     });
     it("Ciclo 2 (Ana): Deve cortar o texto se for maior que o limite", () => {
         const textoGrande = "abcdefghij"; // 10 letras
-        // Se o limite for 5, esperamos que ele corte e retorne as 5 primeiras
-        expect(limitarTexto(textoGrande, 5)).toBe("abcde");
+        // Se o limite for 5, esperamos que ele corte e retorne tamanho 5
+        expect(limitarTexto(textoGrande, 5).length).toBe(5);
     });
+    it("Ciclo 3 (Ana): Deve adicionar reticências '...' ao final se o texto for cortado", () => {
+        const textoGrande = "abcdefghij"; // 10 letras
+        // Se o limite for 5, ele não pode retornar "abcde...", pois isso teria 8 letras.
+        // Ele deve retornar "ab..." (tamanho final = 5)
+        expect(limitarTexto(textoGrande, 5)).toBe("ab...");
+    });
+
 
 });
