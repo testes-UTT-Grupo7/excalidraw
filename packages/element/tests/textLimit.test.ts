@@ -7,4 +7,10 @@ describe("TDD - limitarTexto", () => {
         // Esperamos que ele não corte nada e retorne igual
         expect(limitarTexto(textoPequeno, 1000)).toBe("Olá Excalidraw");
     });
+    it("Ciclo 2 (Ana): Deve cortar o texto se for maior que o limite", () => {
+        const textoGrande = "abcdefghij"; // 10 letras
+        // Se o limite for 5, esperamos que ele corte e retorne as 5 primeiras
+        expect(limitarTexto(textoGrande, 5)).toBe("abcde");
+    });
+
 });
