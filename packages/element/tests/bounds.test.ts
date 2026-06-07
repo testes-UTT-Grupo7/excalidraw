@@ -4,7 +4,11 @@ import { arrayToMap, ROUNDNESS } from "@excalidraw/common";
 
 import type { LocalPoint } from "@excalidraw/math";
 
-import { getElementAbsoluteCoords, getElementBounds } from "../src/bounds";
+import {
+  getElementAbsoluteCoords,
+  getElementBounds,
+  getCommonBounds,
+} from "../src/bounds";
 
 import type { ExcalidrawElement, ExcalidrawLinearElement } from "../src/types";
 
@@ -139,5 +143,79 @@ describe("getElementBounds", () => {
     expect(y1).toEqual(185.24770129343722);
     expect(x2).toEqual(481.4815539037601);
     expect(y2).toEqual(319.8162855827246);
+  });
+});
+
+describe("getCommonBounds", () => {
+  // TESTES DE CAIXA-BRANCA
+  describe("Abordagem Principal: Caixa-Branca (MC/DC)", () => {
+    it("CT1: Lista de elementos vazia (D5 - V, D16 - F)", () => {
+      const resultado = getCommonBounds([], undefined);
+      expect(resultado).toEqual([0, 0, 0, 0]);
+    });
+
+    it("CT2: Múltiplos elementos com mapa", () => {
+      const el1 = _ce({ x: 10, y: 10, w: 50, h: 50 });
+      const el2 = _ce({ x: 50, y: 50, w: 50, h: 50 });
+      const elements = [el1, el2];
+
+      const elementsMap = arrayToMap(elements);
+
+      const resultado = getCommonBounds(elements, elementsMap);
+
+      expect(resultado).toEqual([10, 10, 100, 100]);
+    });
+
+    it("CT3: Múltiplos elementos sem mapa", () => {
+      const el1 = _ce({ x: 0, y: 0, w: 100, h: 100 });
+      const el2 = _ce({ x: 50, y: 50, w: 200, h: 200 });
+      const elements = [el1, el2];
+
+      const resultado = getCommonBounds(elements, undefined);
+
+      expect(resultado).toEqual([0, 0, 250, 250]);
+    });
+  });
+
+//TESTES COMPLEMENTARES DE CAIXA-PRETA
+  describe("Abordagem Complementar: Caixa-Preta (Classes de Equivalência e Limites)", () => {
+    it("CT1: Elemento único em coordenadas positivas", () => {
+      const elements = [_ce({ x: 10, y: 10, w: 50, h: 50 })];
+      const resultado = getCommonBounds(elements);
+      expect(resultado).toEqual([10, 10, 60, 60]);
+    });
+
+    it("CT2: Múltiplos elementos espalhados em quadrantes negativos", () => {
+      const el1 = _ce({ x: -200, y: -200, w: 50, h: 50 });
+      const el2 = _ce({ x: -50, y: -50, w: 30, h: 30 });
+
+      const resultado = getCommonBounds([el1, el2]);
+
+      expect(resultado).toEqual([-200, -200, -20, -20]);
+    });
+
+    it("CT3: Elemento único rotacionado", () => {
+      const elements = [
+        _ce({
+          x: 40,
+          y: 30,
+          w: 20,
+          h: 10,
+          a: Math.PI / 4,
+        }),
+      ];
+
+      const resultado = getCommonBounds(elements);
+
+      expect(resultado[0]).toEqual(39.39339828220179);
+      expect(resultado[1]).toEqual(24.393398282201787);
+      expect(resultado[2]).toEqual(60.60660171779821);
+      expect(resultado[3]).toEqual(45.60660171779821);
+    });
+
+    it("CT4: Lista de elementos vazia - Fronteira Inválida (CE5, CE6, CS2)", () => {
+      const resultado = getCommonBounds([]);
+      expect(resultado).toEqual([0, 0, 0, 0]);
+    });
   });
 });
