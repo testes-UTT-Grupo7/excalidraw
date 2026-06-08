@@ -29,7 +29,7 @@ import type { AppState, DataURL, LibraryItem } from "../types";
 
 import type { ImportedLibraryData } from "./types";
 
-const parseFileContents = async (blob: Blob | File): Promise<string> => {
+export const parseFileContents = async (blob: Blob | File): Promise<string> => {
   let contents: string;
 
   if (blob.type === MIME_TYPES.png) {
@@ -59,13 +59,18 @@ const parseFileContents = async (blob: Blob | File): Promise<string> => {
         };
       });
     }
-    if (blob.type === MIME_TYPES.svg) {
+
+    const isSvgContent =
+      contents.trim().startsWith("<svg") || contents.includes("<svg");
+
+    if (blob.type === MIME_TYPES.svg || isSvgContent) {
       try {
         return decodeSvgBase64Payload({
           svg: contents,
         });
       } catch (error: any) {
-        if (error.message === "INVALID") {
+        if (error.message === "INVALID" || error) {
+          // Garante a captura caso a função quebre
           throw new ImageSceneDataError(
             "Image doesn't contain scene",
             "IMAGE_NOT_CONTAINS_SCENE_DATA",
