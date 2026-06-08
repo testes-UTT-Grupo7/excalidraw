@@ -60,17 +60,13 @@ export const parseFileContents = async (blob: Blob | File): Promise<string> => {
       });
     }
 
-    const isSvgContent =
-      contents.trim().startsWith("<svg") || contents.includes("<svg");
-
-    if (blob.type === MIME_TYPES.svg || isSvgContent) {
+    if (blob.type === MIME_TYPES.svg) {
       try {
         return decodeSvgBase64Payload({
           svg: contents,
         });
       } catch (error: any) {
-        if (error.message === "INVALID" || error) {
-          // Garante a captura caso a função quebre
+        if (error.message === "INVALID") {
           throw new ImageSceneDataError(
             "Image doesn't contain scene",
             "IMAGE_NOT_CONTAINS_SCENE_DATA",
@@ -160,7 +156,33 @@ export const loadSceneOrLibraryFromBlob = async (
           "IMAGE_NOT_CONTAINS_SCENE_DATA",
         );
       }
-      throw error;
+      
+      // Fallback for .excalidraw files containing SVG content
+      if (
+        contents.trim().startsWith("<svg") ||
+        (contents.trim().startsWith("<?xml") && contents.includes("<svg")) ||
+        (contents.trim().startsWith("<!DOCTYPE svg") && contents.includes("<svg")) ||
+        (contents.trim().startsWith("<!--") && contents.includes("<svg"))
+      ) {
+        try {
+          const svgContent = decodeSvgBase64Payload({ svg: contents });
+          try {
+            data = JSON.parse(svgContent);
+          } catch (jsonError) {
+            throw new Error("Error: invalid file");
+          }
+        } catch (svgError: any) {
+          if (svgError.message === "INVALID") {
+            throw new ImageSceneDataError(
+              "This file appears to be an SVG image, not an Excalidraw scene file. If this SVG was exported from Excalidraw, try renaming it to .excalidraw.svg and ensure 'Embed scene' was enabled during export.",
+              "IMAGE_NOT_CONTAINS_SCENE_DATA",
+            );
+          }
+          throw new Error("Error: invalid file");
+        }
+      } else {
+        throw error;
+      }
     }
     if (isValidExcalidrawData(data)) {
       return {
