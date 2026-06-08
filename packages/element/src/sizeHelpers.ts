@@ -147,7 +147,15 @@ export const getPerfectElementSize = (
     } else {
       height = absWidth * Math.tan(lockedAngle) * Math.sign(height) || height;
     }
-  } else if (elementType !== "selection") {
+  } else if (
+    elementType === "rectangle" ||
+    elementType === "ellipse" ||
+    elementType === "diamond" ||
+    elementType === "image" ||
+    elementType === "frame" ||
+    elementType === "magicframe" ||
+    elementType === "embeddable"
+  ) {
     height = absWidth * Math.sign(height);
   }
   return { width, height };

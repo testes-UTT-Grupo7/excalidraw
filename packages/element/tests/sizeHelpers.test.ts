@@ -55,4 +55,64 @@ describe("getPerfectElementSize", () => {
     expect(width).toBeCloseTo(0, EPSILON_DIGITS);
     expect(height).toBeCloseTo(0, EPSILON_DIGITS);
   });
+
+  describe("area elements", () => {
+    it("should return a square (height = width) for rectangle", () => {
+      const { height, width } = getPerfectElementSize("rectangle", 200, 50);
+      expect(width).toBe(200);
+      expect(height).toBe(200);
+    });
+
+    it("should return a square for ellipse", () => {
+      const { height, width } = getPerfectElementSize("ellipse", 150, 10);
+      expect(width).toBe(150);
+      expect(height).toBe(150);
+    });
+
+    it("should return a square for image", () => {
+      const { height, width } = getPerfectElementSize("image", 300, 20);
+      expect(width).toBe(300);
+      expect(height).toBe(300);
+    });
+
+    it("should preserve negative signals for diamond", () => {
+      const { height, width } = getPerfectElementSize("diamond", -100, -40);
+      expect(width).toBe(-100);
+      expect(height).toBe(-100);
+    });
+
+    it("should preserve mixed signals for rectangle", () => {
+      const { height, width } = getPerfectElementSize("rectangle", 50, -20);
+      expect(width).toBe(50);
+      expect(height).toBe(-50);
+    });
+
+    it("should handle zero dimensions for ellipse", () => {
+      const { height, width } = getPerfectElementSize("ellipse", 0, 0);
+      expect(width).toBe(0);
+      expect(height).toBe(0);
+    });
+  });
+
+  describe("unsupported types", () => {
+    it("should return original dimensions for text", () => {
+      const { height, width } = getPerfectElementSize("text", 150, 30);
+      expect(width).toBe(150);
+      expect(height).toBe(30);
+    });
+
+    it("should return original dimensions for selection", () => {
+      const { height, width } = getPerfectElementSize("selection", 100, 100);
+      expect(width).toBe(100);
+      expect(height).toBe(100);
+    });
+  });
+
+  describe("freedraw", () => {
+    it("should snap freedraw to 45 deg similarly to lines", () => {
+      const { height, width } = getPerfectElementSize("freedraw", 100, 105);
+      expect(width).toBeCloseTo(100, EPSILON_DIGITS);
+      expect(height).toBeCloseTo(100, EPSILON_DIGITS);
+    });
+  });
 });
